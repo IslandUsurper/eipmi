@@ -432,7 +432,62 @@ decode_application(
     ]};
 decode_application(?SET_SESSION_PRIVILEGE_LEVEL, <<?EIPMI_RESERVED:4, P:4>>) ->
     {ok, [{privilege, decode_privilege(P)}]};
-decode_application(?CLOSE_SESSION, _) ->
+decode_application(
+    ?ACTIVATE_PAYLOAD,
+    <<?EIPMI_RESERVED:31, Test:1, InSize:16/little, OutSize:16/little,
+        Port:16/little, Vlan:16/little>>
+) ->
+    UsesVlan =
+        case Vlan of
+            16#ffff -> [];
+            V -> [V]
+        end,
+    {ok, [
+        {test_mode, eipmi_util:get_bool(Test)},
+        {inbound_payload_size, InSize},
+        {outbound_payload_size, OutSize},
+        {payload_port, Port}
+        | UsesVlan
+    ]};
+decode_application(
+    ?GET_PAYLOAD_ACTIVATION_STATUS,
+    <<?EIPMI_RESERVED:4, Cap:4, I8:1, I7:1, I6:1, I5:1, I4:1, I3:1, I2:1, I1:1,
+        I16:1, I15:1, I14:1, I13:1, I12:1, I11:1, I10:1, I9:1>>
+) ->
+    Is = [
+        I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, I12, I13, I14, I15, I16
+    ],
+    {ok, [
+        {instance_capacity, Cap},
+        {instances_activated, [
+            I
+         || {I, S} <- lists:zip(lists:seq(1, 16), Is), eipmi_util:get_bool(S)
+        ]}
+    ]};
+decode_application(
+    ?GET_PAYLOAD_INSTANCE_INFO, <<Sess:32/little, Port:8, ?EIPMI_RESERVED:56>>
+) ->
+    {ok, [
+        {session, Sess},
+        {serial_port, Port}
+    ]};
+decode_application(
+    ?GET_CHANNEL_PAYLOAD_SUPPORT,
+    <<Standard:16, Setup:16, Oem:16, ?EIPMI_RESERVED:16>>
+) ->
+    {ok, [
+        {standard_types, Standard},
+        {setup_types, Setup},
+        {oem_types, Oem}
+    ]};
+decode_application(?GET_CHANNEL_PAYLOAD_VERSION, <<Major:4, Minor:4>>) ->
+    Maj = binary:encode_unsigned(Major),
+    Min = binary:encode_unsigned(Minor),
+    {ok, [{version, <<Maj, $., Min>>}]};
+decode_application(Res, _) when
+    Res =:= ?CLOSE_SESSION orelse
+        Res =:= ?DEACTIVATE_PAYLOAD
+->
     {ok, []}.
 
 %%------------------------------------------------------------------------------

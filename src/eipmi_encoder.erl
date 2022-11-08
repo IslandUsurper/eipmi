@@ -73,16 +73,20 @@ ping(Header = #rmcp_header{class = ?RMCP_ASF}, #asf_ping{iana = I, tag = T}) ->
 ipmi(Header = #rmcp_header{class = ?RMCP_IPMI}, Properties, Req, Data) ->
     HeaderBin = header(Header, ?RMCP_NORMAL),
     A = proplists:get_value(auth_type, Properties),
-    Pt = proplists:get_value(payload_type, Properties, ipmi),
-    case {A, Pt} of
-        {rmcp_plus, ipmi} ->
+    PayloadType = proplists:get_value(payload_type, Properties, ipmi),
+    case {A, PayloadType} of
+        {rmcp_plus, Pt} when Pt =:= impi orelse Pt =:= sol ->
             E = proplists:get_value(encrypt_type, Properties),
             H = proplists:get_value(integrity_type, Properties),
             SIK = proplists:get_value(session_key, Properties),
             K2 = eipmi_auth:extra_key(E, H, SIK),
 
             SessionBin = session2(Properties),
-            RequestBin = request(Properties, Req, Data),
+            RequestBin =
+                case Pt of
+                    ipmi -> request(Properties, Req, Data);
+                    sol -> sol(Properties, Data)
+                end,
             Encrypted = eipmi_auth:encrypt(E, K2, RequestBin),
             Length = size(Encrypted),
             Unpadded =
@@ -137,6 +141,19 @@ request(Properties, {NetFn, Cmd}, Data) ->
     Tail = request_tail(Properties, Cmd, Data),
     TailSum = checksum(Tail),
     <<Head/binary, HeadSum:8/signed, Tail/binary, TailSum:8/signed>>.
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Encodes a Serial-over-LAN request. Refer to chapter 15.9, SOL Payload Data
+%% Format.
+%% @end
+%%------------------------------------------------------------------------------
+sol(Properties, Data) ->
+    S = proplists:get_value(packet_seq_nr, Properties),
+    A = proplists:get_value(n_ack_seq_nr, Properties),
+    C = proplists:get_value(accepted_char_count, Properties),
+    O = proplists:get_value(operation, Properties),
+    <<S:8, A:8, C:8, O:8, Data/binary>>.
 
 %%%=============================================================================
 %%% Internal functions

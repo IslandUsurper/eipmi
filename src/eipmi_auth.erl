@@ -199,8 +199,9 @@ encode_integrity_type(hmac_sha256_128) -> 4.
 %% Encodes a payload type into its integer representation.
 %% @end
 %%------------------------------------------------------------------------------
--spec encode_payload_type(payload_type()) -> 0 | 16..21.
+-spec encode_payload_type(payload_type()) -> 0..1 | 16..21.
 encode_payload_type(ipmi) -> 0;
+encode_payload_type(sol) -> 1;
 encode_payload_type(open_session_rq) -> 16#10;
 encode_payload_type(open_session_rs) -> 16#11;
 encode_payload_type(rakp1) -> 16#12;
@@ -256,8 +257,9 @@ decode_integrity_type(4) -> hmac_sha256_128.
 %% Decodes a payload type integer into human readable format.
 %% @end
 %%------------------------------------------------------------------------------
--spec decode_payload_type(0 | 16..21) -> payload_type().
+-spec decode_payload_type(0..1 | 16..21) -> payload_type().
 decode_payload_type(0) -> ipmi;
+decode_payload_type(1) -> sol;
 decode_payload_type(16#10) -> open_session_rq;
 decode_payload_type(16#11) -> open_session_rs;
 decode_payload_type(16#12) -> rakp1;

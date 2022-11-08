@@ -123,6 +123,40 @@ encode_application(?SET_SESSION_PRIVILEGE_LEVEL, Properties) ->
     <<0:4, (encode_privilege(proplists:get_value(privilege, Properties))):4>>;
 encode_application(?CLOSE_SESSION, Properties) ->
     <<(proplists:get_value(session_id, Properties)):32/little>>;
+encode_application(?ACTIVATE_PAYLOAD, Properties) ->
+    Pt = eipmi_auth:encode_payload_type(
+        proplists:get_value(payload_type, Properties)
+    ),
+    I = proplists:get_value(payload_instance, Properties, 1),
+    % E = get_encoded_bool(encrypt, Properties),
+    % A = get_encoded_bool(authenticate, Properties),
+    <<0:2, Pt:6, 0:4, I:4, 0:1, 0:1, 0:1, 0:1, 0:2, 0:2, 0:24>>;
+encode_application(?DEACTIVATE_PAYLOAD, Properties) ->
+    Pt = eipmi_auth:encode_payload_type(
+        proplists:get_value(payload_type, Properties)
+    ),
+    I = proplists:get_value(payload_instance, Properties, 1),
+    <<0:2, Pt:6, 0:4, I:4, 0:32>>;
+encode_application(?GET_PAYLOAD_ACTIVATION_STATUS, Properties) ->
+    Pt = eipmi_auth:encode_payload_type(
+        proplists:get_value(payload_type, Properties)
+    ),
+    <<Pt:8>>;
+encode_application(?GET_PAYLOAD_INSTANCE_INFO, Properties) ->
+    Pt = eipmi_auth:encode_payload_type(
+        proplists:get_value(payload_type, Properties)
+    ),
+    I = proplists:get_value(payload_instance, Properties, 1),
+    <<0:2, Pt:5, 0:4, I:4>>;
+encode_application(?GET_CHANNEL_PAYLOAD_SUPPORT, Properties) ->
+    C = proplists:get_value(channel, Properties),
+    <<0:4, C:4>>;
+encode_application(?GET_CHANNEL_PAYLOAD_VERSION, Properties) ->
+    C = proplists:get_value(channel, Properties),
+    Pt = eipmi_auth:encode_payload_type(
+        proplists:get_value(payload_type, Properties)
+    ),
+    <<0:4, C:4, Pt:8>>;
 encode_application(Req, _Properties) when
     Req =:= ?GET_DEVICE_ID orelse
         Req =:= ?COLD_RESET orelse
