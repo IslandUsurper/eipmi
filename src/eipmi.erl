@@ -46,6 +46,8 @@
     send_message/7,
     get_system_guid/1,
     set_session_privilege_level/2,
+    activate_serial_over_lan/2,
+    deactivate_serial_over_lan/2,
     chassis_control/2,
     chassis_identify/2,
     set_chassis_capabilities/5,
@@ -761,6 +763,30 @@ get_system_guid(Session) ->
 set_session_privilege_level(Session, Privilege) ->
     Args = [{privilege, Privilege}],
     Command = ?SET_SESSION_PRIVILEGE_LEVEL,
+    raw(Session, ?IPMI_NETFN_APPLICATION_REQUEST, Command, Args).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Turns on Serial over LAN payloads.
+%% @end
+%%------------------------------------------------------------------------------
+-spec activate_serial_over_lan(session(), 1..15) ->
+    ok | {ok, proplists:proplist()} | {error, term()}.
+activate_serial_over_lan(Session, Instance) ->
+    Args = [{payload_type, sol}, {payload_instance, Instance}],
+    Command = ?ACTIVATE_PAYLOAD,
+    raw(Session, ?IPMI_NETFN_APPLICATION_REQUEST, Command, Args).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Turns off Serial over LAN payloads, reverting back to IPMI payloads in RMCP.
+%% @end
+%%------------------------------------------------------------------------------
+-spec deactivate_serial_over_lan(session(), 1..15) ->
+    ok | {ok, proplists:proplist()} | {error, term()}.
+deactivate_serial_over_lan(Session, Instance) ->
+    Args = [{payload_type, sol}, {payload_instance, Instance}],
+    Command = ?DEACTIVATE_PAYLOAD,
     raw(Session, ?IPMI_NETFN_APPLICATION_REQUEST, Command, Args).
 
 %%------------------------------------------------------------------------------
