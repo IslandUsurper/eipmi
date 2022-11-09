@@ -75,7 +75,7 @@ ipmi(Header = #rmcp_header{class = ?RMCP_IPMI}, Properties, Req, Data) ->
     A = proplists:get_value(auth_type, Properties),
     PayloadType = proplists:get_value(payload_type, Properties, ipmi),
     case {A, PayloadType} of
-        {rmcp_plus, Pt} when Pt =:= impi orelse Pt =:= sol ->
+        {rmcp_plus, Pt} when Pt =:= ipmi orelse Pt =:= sol ->
             E = proplists:get_value(encrypt_type, Properties),
             H = proplists:get_value(integrity_type, Properties),
             SIK = proplists:get_value(session_key, Properties),
