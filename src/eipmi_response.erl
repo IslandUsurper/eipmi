@@ -483,7 +483,7 @@ decode_application(
 decode_application(?GET_CHANNEL_PAYLOAD_VERSION, <<Major:4, Minor:4>>) ->
     Maj = binary:encode_unsigned(Major),
     Min = binary:encode_unsigned(Minor),
-    {ok, [{version, <<Maj, $., Min>>}]};
+    {ok, [{version, <<Maj/binary, $., Min/binary>>}]};
 decode_application(Res, _) when
     Res =:= ?CLOSE_SESSION orelse
         Res =:= ?DEACTIVATE_PAYLOAD
