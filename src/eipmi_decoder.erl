@@ -181,13 +181,21 @@ maybe_encrypted(I, AllProperties, Len, Data) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-response(I, Len, Rest) ->
-    <<Head:2/binary, Sum1:8/signed, Tail:Len/binary, Sum2:8/signed>> = Rest,
-    case has_integrity(Head, Sum1) andalso has_integrity(Tail, Sum2) of
-        true ->
-            lan(I, Head, Tail);
-        false ->
-            {error, corrupted_ipmi_message}
+response(#rmcp_ipmi{ properties = Ps } = I, Len, Rest) ->
+    % payload_type is only set in rmcp_plus sessions, so assume plain rmcp is
+    % ipmi.
+    case proplists:get_value(payload_type, Ps, ipmi) of
+        ipmi ->
+            <<Head:2/binary, Sum1:8/signed, Tail:Len/binary, Sum2:8/signed>> = Rest,
+            case has_integrity(Head, Sum1) andalso has_integrity(Tail, Sum2) of
+                true ->
+                    lan(I, Head, Tail);
+                false ->
+                    {error, corrupted_ipmi_message}
+            end;
+        sol ->
+            <<Head:4/binary, Data:Len/binary>> = Rest,
+            sol(I, Head, Data)
     end.
 
 %%------------------------------------------------------------------------------
@@ -268,6 +276,22 @@ lan(
     }};
 lan(_Ipmi, _Head, _Tail) ->
     {error, unsupported_ipmi_message}.
+
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
+sol(Ipmi = #rmcp_ipmi{properties = Ps}, <<Pack:8, Ack:8, Char:8, OpSt:8>>, Data) ->
+    {ok, Ipmi#rmcp_ipmi{
+           properties = [
+                         {packet_seq_nr, Pack},
+                         {n_ack_seq_nr, Ack},
+                         {accepted_char_count, Char},
+                         {operation_status, OpSt}
+                         | Ps],
+           data = Data
+          }};
+sol(_Ipmi, _Head, _Data) ->
+    {error, unsupported_sol_message}.
 
 %%------------------------------------------------------------------------------
 %% @private

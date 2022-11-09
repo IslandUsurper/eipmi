@@ -152,7 +152,7 @@ sol(Properties, Data) ->
     S = proplists:get_value(packet_seq_nr, Properties),
     A = proplists:get_value(n_ack_seq_nr, Properties),
     C = proplists:get_value(accepted_char_count, Properties),
-    O = proplists:get_value(operation, Properties),
+    O = proplists:get_value(operation_status, Properties),
     <<S:8, A:8, C:8, O:8, Data/binary>>.
 
 %%%=============================================================================
