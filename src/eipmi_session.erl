@@ -584,6 +584,8 @@ get_response(Packet = #rmcp_ipmi{properties = Ps}) ->
     get_response(proplists:get_value(completion, Ps), Packet).
 get_response(normal, #rmcp_ipmi{cmd = Cmd, data = Data}) ->
     eipmi_response:decode(Cmd, Data);
+get_response(sol, #rmcp_ipmi{data = Data}) ->
+    {ok, Data};
 get_response(Completion, _Packet) ->
     {error, {bmc_error, Completion}}.
 

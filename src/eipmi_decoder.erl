@@ -286,7 +286,8 @@ sol(Ipmi = #rmcp_ipmi{properties = Ps}, <<Pack:8, Ack:8, Char:8, OpSt:8>>, Data)
                          {packet_seq_nr, Pack},
                          {n_ack_seq_nr, Ack},
                          {accepted_char_count, Char},
-                         {operation_status, OpSt}
+                         {operation_status, OpSt},
+                         {completion, sol}
                          | Ps],
            data = Data
           }};
