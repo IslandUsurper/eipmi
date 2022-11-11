@@ -138,6 +138,13 @@ polling is enabled).
 ```
 An IPMI platform event trap forwarded by the trap handling mechanism (only if
 enabled).
+```erlang
+{ipmi,
+ Session :: session(),
+ Address :: inet:ip4_address(),
+ {serial, Data :: binary()}}
+```
+Character data from a Serial-over-LAN packet
 
 An established session will be kept alive by the session state machine until
 either `eipmi:close/1` gets called or the owner process exits.

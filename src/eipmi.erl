@@ -509,6 +509,17 @@ ping(IPAddress, Timeout) when is_integer(Timeout) andalso Timeout > 0 ->
 %%       an IPMI PET event forwarded by the trap handling mechanism
 %%     </p>
 %%   </dd>
+%%   <dt>
+%%     `{ipmi,
+%%       Session :: session(),
+%%       Address :: inet:ip4_address(),
+%%       {serial, Data :: binary()}}'
+%%   </dt>
+%%   <dd>
+%%     <p>
+%%       character data from a Serial-over-LAN packet
+%%     </p>
+%%   </dd>
 %% </dl>
 %% @see open/2
 %% @see close/1
