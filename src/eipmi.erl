@@ -50,6 +50,7 @@
     deactivate_serial_over_lan/2,
     get_payload_activation/1,
     get_payload_info/2,
+    get_payload_support/1,
     chassis_control/2,
     chassis_identify/2,
     set_chassis_capabilities/5,
@@ -814,6 +815,13 @@ get_payload_activation(Session) ->
 get_payload_info(Session, Instance) ->
     Args = [{payload_type, sol}, {payload_instance, Instance}],
     Command = ?GET_PAYLOAD_INSTANCE_INFO,
+    raw(Session, ?IPMI_NETFN_APPLICATION_REQUEST, Command, Args).
+
+-spec get_payload_support(session()) ->
+    ok | {ok, proplists:proplist()} | {error, term()}.
+get_payload_support(Session) ->
+    Args = [{payload_type, sol}],
+    Command = ?GET_CHANNEL_PAYLOAD_SUPPORT,
     raw(Session, ?IPMI_NETFN_APPLICATION_REQUEST, Command, Args).
 
 %%------------------------------------------------------------------------------
