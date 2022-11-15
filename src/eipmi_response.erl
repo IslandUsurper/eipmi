@@ -473,7 +473,7 @@ decode_application(
     ]};
 decode_application(
     ?GET_CHANNEL_PAYLOAD_SUPPORT,
-    <<Standard:16, Setup:16, Oem:16, ?EIPMI_RESERVED:16>>
+    <<Standard:16/little, Setup:16/little, Oem:16/little, ?EIPMI_RESERVED:16>>
 ) ->
     {ok, [
         {standard_types, Standard},
