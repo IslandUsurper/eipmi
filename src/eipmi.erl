@@ -820,7 +820,7 @@ get_payload_info(Session, Instance) ->
 -spec get_payload_support(session()) ->
     ok | {ok, proplists:proplist()} | {error, term()}.
 get_payload_support(Session) ->
-    Args = [{payload_type, sol}],
+    Args = [{channel, ?IPMI_REQUESTED_CHANNEL}],
     Command = ?GET_CHANNEL_PAYLOAD_SUPPORT,
     raw(Session, ?IPMI_NETFN_APPLICATION_REQUEST, Command, Args).
 
