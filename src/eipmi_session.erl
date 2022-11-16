@@ -59,6 +59,8 @@
     start_link/2,
     rpc/3,
     rpc/4,
+    sol/3,
+    sol/4,
     stop/2
 ]).
 
@@ -216,10 +218,13 @@ rpc_({error, timeout}, Fun, Retransmits) when Retransmits > 0 ->
 rpc_(Result, _Fun, _Retransmits) ->
     Result.
 
+sol(Pid, Data, Properties) ->
+    Retransmits = eipmi_util:get_env(retransmits, ?IPMI_RETRANSMITS),
+    sol(Pid, Data, Properties, Retransmits).
 sol(Pid, Data, Properties, Retransmits) ->
     RqSeqNr = gen_server:call(Pid, get_rq_seq_nr),
     F = fun() ->
-        gen_server:cast(Pid, {sol, Data, Properties, RqSeqNr}, infinity)
+        gen_server:cast(Pid, {sol, Data, Properties, RqSeqNr})
     end,
     rpc_(F(), F, Retransmits).
 

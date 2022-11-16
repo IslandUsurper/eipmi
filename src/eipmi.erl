@@ -91,7 +91,7 @@
     get_device_locator_record_id/2,
     oem/4,
     raw/4,
-    sol/2,
+    sol/3,
     sel_to_sdr/2,
     sel_to_fru/2,
     sel_to_fru/3,
