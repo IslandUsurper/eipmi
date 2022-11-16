@@ -598,8 +598,17 @@ get_response(Packet = #rmcp_ipmi{properties = Ps}) ->
     get_response(proplists:get_value(completion, Ps), Packet).
 get_response(normal, #rmcp_ipmi{cmd = Cmd, data = Data}) ->
     eipmi_response:decode(Cmd, Data);
-get_response(sol, #rmcp_ipmi{data = Data}) ->
-    {ok, {serial, Data}};
+get_response(sol, #rmcp_ipmi{data = Data, properties = Props}) ->
+    {Ps, _} = proplists:split(Props, [
+        packet_seq_nr,
+        n_ack_seq_nr,
+        accepted_char_count,
+        ack,
+        available,
+        overrun,
+        break
+    ]),
+    {ok, {serial, Data, Ps}};
 get_response(Completion, _Packet) ->
     {error, {bmc_error, Completion}}.
 
@@ -634,7 +643,8 @@ process_sol({Data, RqSeqNr, Props}, State = #state{properties = Ps}) ->
         Header,
         eipmi_util:update_val(rq_seq_nr, RqSeqNr, Properties),
         sol,
-        Data),
+        Data
+    ),
     udp_send(Bin, State).
 
 %%------------------------------------------------------------------------------
