@@ -91,6 +91,7 @@
     get_device_locator_record_id/2,
     oem/4,
     raw/4,
+    sol/2,
     sel_to_sdr/2,
     sel_to_fru/2,
     sel_to_fru/3,
@@ -1434,6 +1435,31 @@ oem(Session, NetFn, Command, Binary) ->
     ok | {ok, proplists:proplist()} | {error, term()}.
 raw(Session, NetFn, Command, Properties) ->
     F = fun(Pid) -> eipmi_session:rpc(Pid, {NetFn, Command}, Properties) end,
+    maybe_ok_return(with_session(Session, F)).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Sends a raw serial-over-LAN packet. Data contains the character data, or
+%% an empty bitstring if merely ACKing a packet from the BMC. It is the
+%% responsibility of the caller to keep track of packet sequence numbers and
+%% to retransmit if the BMC sends NACK packets or partial ACKs.
+%%
+%% Properties may contain the following keys and values:
+%% <dl>
+%% <dt>packet_seq_nr</dt><dd>Packet sequence number. Set to 0 for empty ACK messages.</dd>
+%% <dt>n_ack_seq_nr</dt><dd>The packet sequence number to be (n)acknowledged.</dd>
+%% <dt>accepted_char_count</dt><dd>Thu number of characters accepted in the received message.</dd>
+%% <dt>nack</dt><dd>Include if NACKing a packet.</dd>
+%% <dt>break</dt><dd>Include to break.</dd>
+%% <dt>flush_inbound</dt><dd>Drops data received by the BMC in its buffer (but not the data in this packet, if any).</dd>
+%% <dt>flush_outbound</dt><dd>Drops buffered data to be sent by the BMC</dd>
+%% </dl>
+%% @end
+%%------------------------------------------------------------------------------
+-spec sol(session(), binary(), proplists:proplist()) ->
+    ok | {ok, proplists:proplist()} | {error, term()}.
+sol(Session, Data, Properties) ->
+    F = fun(Pid) -> eipmi_session:sol(Pid, Data, Properties) end,
     maybe_ok_return(with_session(Session, F)).
 
 %%------------------------------------------------------------------------------

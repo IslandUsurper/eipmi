@@ -128,9 +128,15 @@ encode_application(?ACTIVATE_PAYLOAD, Properties) ->
         proplists:get_value(payload_type, Properties)
     ),
     I = proplists:get_value(payload_instance, Properties, 1),
-    % E = get_encoded_bool(encrypt, Properties),
-    % A = get_encoded_bool(authenticate, Properties),
-    <<0:2, Pt:6, 0:4, I:4, 0:1, 0:1, 0:1, 0:1, 0:2, 0:2, 0:24>>;
+    E = get_encoded_bool(encrypt, Properties),
+    A = get_encoded_bool(authenticate, Properties),
+    Al =
+        case proplists:get_value(serial_alerts, Properties, succeed) of
+            succeed -> 2;
+            defer -> 1;
+            fail -> 0
+        end,
+    <<0:2, Pt:6, 0:4, I:4, E:1, A:1, 0:1, 0:1, Al:2, 0:1, 0:1, 0:24>>;
 encode_application(?DEACTIVATE_PAYLOAD, Properties) ->
     Pt = eipmi_auth:encode_payload_type(
         proplists:get_value(payload_type, Properties)
@@ -557,3 +563,9 @@ encode_picmg_site_type(pmc) -> 16#08;
 encode_picmg_site_type(rear_transition_module) -> 16#09;
 encode_picmg_site_type(mch) -> 16#0a;
 encode_picmg_site_type(power_module) -> 16#0b.
+
+get_encoded_bool(Key, Ps) ->
+    case proplists:get_bool(Key, Ps) of
+        true -> 1;
+        false -> 0
+    end.

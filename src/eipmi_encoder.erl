@@ -67,7 +67,7 @@ ping(Header = #rmcp_header{class = ?RMCP_ASF}, #asf_ping{iana = I, tag = T}) ->
 -spec ipmi(
     #rmcp_header{},
     proplists:proplist(),
-    eipmi:request() | open_session_rq | rakp1 | rakp3,
+    eipmi:request() | open_session_rq | rakp1 | rakp3 | sol,
     binary()
 ) -> binary().
 ipmi(Header = #rmcp_header{class = ?RMCP_IPMI}, Properties, Req, Data) ->
@@ -149,11 +149,20 @@ request(Properties, {NetFn, Cmd}, Data) ->
 %% @end
 %%------------------------------------------------------------------------------
 sol(Properties, Data) ->
+    EncodeBool = fun(Key, Ps) ->
+        case proplists:get_bool(Key, Ps) of
+            true -> 1;
+            false -> 0
+        end
+    end,
     S = proplists:get_value(packet_seq_nr, Properties),
     A = proplists:get_value(n_ack_seq_nr, Properties),
     C = proplists:get_value(accepted_char_count, Properties),
-    O = proplists:get_value(operation_status, Properties),
-    <<S:8, A:8, C:8, O:8, Data/binary>>.
+    Nack = EncodeBool(nack, Properties),
+    Break = EncodeBool(break, Properties),
+    FI = EncodeBool(flush_inbound, Properties),
+    FO = EncodeBool(flush_outbound, Properties),
+    <<S:8, A:8, C:8, 0:1, Nack:1, 0:1, Break:1, 0:2, FI:1, FO:1, Data/binary>>.
 
 %%%=============================================================================
 %%% Internal functions

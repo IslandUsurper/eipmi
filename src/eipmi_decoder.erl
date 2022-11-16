@@ -181,12 +181,13 @@ maybe_encrypted(I, AllProperties, Len, Data) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-response(#rmcp_ipmi{ properties = Ps } = I, Len, Rest) ->
+response(#rmcp_ipmi{properties = Ps} = I, Len, Rest) ->
     % payload_type is only set in rmcp_plus sessions, so assume plain rmcp is
     % ipmi.
     case proplists:get_value(payload_type, Ps, ipmi) of
         ipmi ->
-            <<Head:2/binary, Sum1:8/signed, Tail:Len/binary, Sum2:8/signed>> = Rest,
+            <<Head:2/binary, Sum1:8/signed, Tail:Len/binary, Sum2:8/signed>> =
+                Rest,
             case has_integrity(Head, Sum1) andalso has_integrity(Tail, Sum2) of
                 true ->
                     lan(I, Head, Tail);
@@ -242,7 +243,8 @@ session(
             0 -> outbound_unauth_seq_nr;
             1 -> outbound_auth_seq_nr
         end,
-    {[
+    {
+        [
             {auth_type, rmcp_plus},
             {encrypted, eipmi_util:get_bool(E)},
             {authenticated, eipmi_util:get_bool(A)},
@@ -250,7 +252,9 @@ session(
             {Seq, S},
             {session_id, I}
         ],
-        L, Rest}.
+        L,
+        Rest
+    }.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -280,17 +284,30 @@ lan(_Ipmi, _Head, _Tail) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-sol(Ipmi = #rmcp_ipmi{properties = Ps}, <<Pack:8, Ack:8, Char:8, OpSt:8>>, Data) ->
+sol(
+    Ipmi = #rmcp_ipmi{properties = Ps},
+    <<Pack:8, Acked:8, Char:8, ?EIPMI_RESERVED:1, Nack:1, Done:1, Down:1,
+        Loss:1, Break:1, ?EIPMI_RESERVED:2>>,
+    Data
+) ->
+    Ack = not eipmi_util:get_bool(Nack),
     {ok, Ipmi#rmcp_ipmi{
-           properties = [
-                         {packet_seq_nr, Pack},
-                         {n_ack_seq_nr, Ack},
-                         {accepted_char_count, Char},
-                         {operation_status, OpSt},
-                         {completion, sol}
-                         | Ps],
-           data = Data
-          }};
+        properties = [
+            {packet_seq_nr, Pack},
+            {n_ack_seq_nr, Acked},
+            {accepted_char_count, Char},
+            {ack, Ack},
+            {available,
+                Ack orelse
+                    not eipmi_util:get_bool(Done) andalso
+                        not eipmi_util:get_bool(Down)},
+            {overrun, eipmi_util:get_bool(Loss)},
+            {break, eipmi_util:get_bool(Break)},
+            {completion, sol}
+            | Ps
+        ],
+        data = Data
+    }};
 sol(_Ipmi, _Head, _Data) ->
     {error, unsupported_sol_message}.
 

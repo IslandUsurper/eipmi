@@ -216,6 +216,13 @@ rpc_({error, timeout}, Fun, Retransmits) when Retransmits > 0 ->
 rpc_(Result, _Fun, _Retransmits) ->
     Result.
 
+sol(Pid, Data, Properties, Retransmits) ->
+    RqSeqNr = gen_server:call(Pid, get_rq_seq_nr),
+    F = fun() ->
+        gen_server:cast(Pid, {sol, Data, Properties, RqSeqNr}, infinity)
+    end,
+    rpc_(F(), F, Retransmits).
+
 %%------------------------------------------------------------------------------
 %% @doc
 %% Stop the session process with the specified reason. This is a handy function
@@ -290,6 +297,8 @@ handle_call(Request, _From, State) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+handle_cast({sol, Data, RqSeqNr, Ps}, State) ->
+    {noreply, process_sol({Data, RqSeqNr, Ps}, State)};
 handle_cast({stop, Reason}, State) ->
     {stop, {shutdown, Reason}, State};
 handle_cast(Request, State) ->
@@ -612,6 +621,16 @@ process_request({{NetFn, Cmd}, Data, RqSeqNr, Receiver}, State) ->
     NextState = incr_inbound_seq_nr(NewState),
     %% Response NetFn is request NetFn + 1
     register_request({{NetFn + 1, Cmd}, RqSeqNr}, Receiver, NextState).
+
+process_sol({Data, RqSeqNr, Props}, State = #state{properties = Ps}) ->
+    Header = #rmcp_header{seq_nr = ?RMCP_NOREPLY, class = ?RMCP_IPMI},
+    Properties = [{payload_type, sol} | eipmi_util:merge_vals(Props, Ps)],
+    Bin = eipmi_encoder:ipmi(
+        Header,
+        eipmi_util:update_val(rq_seq_nr, RqSeqNr, Properties),
+        sol,
+        Data),
+    udp_send(Bin, State).
 
 %%------------------------------------------------------------------------------
 %% @private
