@@ -224,7 +224,7 @@ sol(Pid, Data, Properties) ->
 sol(Pid, Data, Properties, Retransmits) ->
     RqSeqNr = gen_server:call(Pid, get_rq_seq_nr),
     F = fun() ->
-        gen_server:cast(Pid, {sol, Data, Properties, RqSeqNr})
+        gen_server:cast(Pid, {sol, Data, RqSeqNr, Properties})
     end,
     rpc_(F(), F, Retransmits).
 
