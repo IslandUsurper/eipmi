@@ -153,7 +153,7 @@ encode_application(?GET_PAYLOAD_INSTANCE_INFO, Properties) ->
         proplists:get_value(payload_type, Properties)
     ),
     I = proplists:get_value(payload_instance, Properties, 1),
-    <<0:2, Pt:5, 0:4, I:4>>;
+    <<0:2, Pt:6, 0:4, I:4>>;
 encode_application(?GET_CHANNEL_PAYLOAD_SUPPORT, Properties) ->
     C = proplists:get_value(channel, Properties),
     <<0:4, C:4>>;
