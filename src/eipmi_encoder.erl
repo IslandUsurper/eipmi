@@ -156,8 +156,8 @@ sol(Properties, Data) ->
         end
     end,
     S = proplists:get_value(packet_seq_nr, Properties),
-    A = proplists:get_value(n_ack_seq_nr, Properties),
-    C = proplists:get_value(accepted_char_count, Properties),
+    A = proplists:get_value(n_ack_seq_nr, Properties, 0),
+    C = proplists:get_value(accepted_char_count, Properties, 0),
     Nack = EncodeBool(nack, Properties),
     Break = EncodeBool(break, Properties),
     FI = EncodeBool(flush_inbound, Properties),
