@@ -119,7 +119,7 @@ ipmi(Ipmi, SessionState, Binary) ->
     A = proplists:get_value(auth_type, AllProperties),
     P = proplists:get_value(payload_type, AllProperties),
     case {A, P} of
-        {rmcp_plus, ipmi} ->
+        {rmcp_plus, Pt} when Pt =:= ipmi orelse Pt =:= sol ->
             case proplists:get_value(authenticated, AllProperties) of
                 true -> authenticate(AllProperties, Binary);
                 _ -> ok
