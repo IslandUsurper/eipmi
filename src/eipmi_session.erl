@@ -67,6 +67,7 @@
     init/1,
     handle_call/3,
     handle_cast/2,
+    handle_continue/2,
     handle_info/2,
     terminate/2,
     code_change/3
@@ -251,13 +252,20 @@ init([Session = {session, {Addr, _}, {Owner, _}}, Options]) ->
     Ref = erlang:monitor(process, Owner),
     Opts = eipmi_util:merge_vals(Options, ?DEFAULTS),
     {ok, Sock} = gen_udp:open(0, [binary, {active, false}]),
-    State = #state{
-        owner = {Owner, Ref},
-        session = Session,
-        address = Addr,
-        socket = Sock,
-        properties = Opts
-    },
+    {ok,
+        #state{
+            owner = {Owner, Ref},
+            session = Session,
+            address = Addr,
+            socket = Sock,
+            properties = Opts
+        },
+        {continue, authenticate}}.
+
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
+handle_continue(authenticate, State = #state{socket = Sock}) ->
     try
         {ok, State1} = get_authentication_capabilities(State),
         {ok, State3} =
