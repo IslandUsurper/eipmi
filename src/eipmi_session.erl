@@ -280,7 +280,7 @@ handle_continue(authenticate, State = #state{socket = Sock}) ->
             end,
         {ok, State4} = set_session_privilege_level(State3),
         ok = inet:setopts(Sock, [{active, true}]),
-        {ok, State4}
+        {noreply, State4}
     catch
         C:E -> {stop, {shutdown, {C, E}}}
     end.
