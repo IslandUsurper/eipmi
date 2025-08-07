@@ -225,6 +225,10 @@ error_logger:info_msg("New privilege level is ~p.~n", [NewPrivilege]),
 History
 -------
 
+### Master (4.1.3)
+
+Currently no difference to latest tag.
+
 ### Version 4.1.2
 
 * Upgrade md2 dependency to 1.2.1 to fix compilation on newer linux distributions
