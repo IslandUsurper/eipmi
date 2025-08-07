@@ -635,13 +635,13 @@ open(Host, Options) ->
 %%------------------------------------------------------------------------------
 %% @doc
 %% Closes an IPMI session previously opened with {@link open/1} or
-%% {@link open/2}. This will return `{error, no_session}' when the given
-%% session is not active any more.
+%% {@link open/2}. This will return an error when the given session is not
+%% active any more.
 %% @end
 %%------------------------------------------------------------------------------
 -spec close(eipmi:session()) -> ok | {error, term()}.
 close(Session) ->
-    ets:delete(eipmi_sessions, Session),
+    true = ets:delete(eipmi_sessions, Session),
     supervisor:terminate_child(?MODULE, Session).
 
 %%------------------------------------------------------------------------------
@@ -1142,13 +1142,8 @@ poll_sel(Session) ->
 %%------------------------------------------------------------------------------
 -spec poll_sel(session(), non_neg_integer(), boolean()) ->
     {ok, pid()} | {error, term()}.
-poll_sel(Session = {session, Target, _}, Interval, Clear) when Interval > 0 ->
-    Result =
-        case ets:lookup(eipmi_sessions, {session, Target}) of
-            [{_, Pid, _}] -> {ok, Pid};
-            [] -> {error, no_session}
-        end,
-    poll_sel(Result, Session, Interval, Clear).
+poll_sel(Session = {session, _, _}, Interval, Clear) when Interval > 0 ->
+    poll_sel(get_session(Session), Session, Interval, Clear).
 poll_sel({ok, Pid}, Session, Interval, Clear) ->
     start_poll(Pid, Session, [{read_sel, Interval}, {clear_sel, Clear}]);
 poll_sel(Error, _Session, _Interval, _Clear) ->
@@ -1508,14 +1503,7 @@ id_to_fru(FruId, SdrRepository) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec sessions() -> [session()].
-sessions() ->
-    ets:select(eipmi_sessions, [
-        {
-            {'$1', '$2'},
-            [{'=:=', session, {element, 1, '$1'}}, {is_pid, '$2'}],
-            ['$1']
-        }
-    ]).
+sessions() -> [Session || {Session, _} <- ets:tab2list(eipmi_sessions)].
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -1588,23 +1576,18 @@ start_poll(SessionPid, Session = {session, _, _}, Options) ->
     Id = {poll, erlang:make_ref()},
     Start = {eipmi_poll, start_link, [SessionPid, Session, Options]},
     Spec = {Id, Start, temporary, brutal_kill, worker, [eipmi_poll]},
-    start_session(Spec).
+    supervisor:start_child(?MODULE, Spec).
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-start_session(Spec = {Id, _, _, _, _, _}) ->
+start_session(Spec = {Session = {session, _, _}, _, _, _, _, _}) ->
     case supervisor:start_child(?MODULE, Spec) of
         Error = {error, _} ->
             Error;
         {ok, Pid} ->
-            case Id of
-                {session, Target, _Owner} ->
-                    ets:insert(eipmi_sessions, {{session, Target}, Pid});
-                Id_ ->
-                    ets:insert(eipmi_sessions, {Id_, Pid})
-            end,
-            {ok, Id}
+            true = ets:insert(eipmi_sessions, {Session, Pid}),
+            {ok, Session}
     end.
 
 %%------------------------------------------------------------------------------
@@ -1618,10 +1601,10 @@ with_session_(Error, _Fun) -> Error.
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-get_session({session, T, _}) ->
-    case ets:lookup(eipmi_sessions, {session, T}) of
+get_session(Session = {session, _, _}) ->
+    case ets:lookup(eipmi_sessions, Session) of
         [] -> {error, no_session};
-        [{_, Pid}] -> {ok, Pid}
+        [{Session, Pid}] -> {ok, Pid}
     end.
 
 %%------------------------------------------------------------------------------

@@ -227,7 +227,7 @@ History
 
 ### Master (4.1.3)
 
-Currently no difference to latest tag.
+* Fix the `eipmi:poll_sel/1,3` functions
 
 ### Version 4.1.2
 
