@@ -225,6 +225,10 @@ error_logger:info_msg("New privilege level is ~p.~n", [NewPrivilege]),
 History
 -------
 
+### Master (4.1.4)
+
+Currently no difference to latest tag.
+
 ### Version 4.1.3
 
 * Fix the `eipmi:poll_sel/1,3` functions
