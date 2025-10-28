@@ -936,6 +936,8 @@ get_reading(Tag, Raw, Properties) ->
 %%------------------------------------------------------------------------------
 get_reading(_, U, _, _, _) when U =:= unspecified orelse U =:= undefined ->
     [];
+get_reading(Tag, Unit, _, undefined, _) ->
+    [{Tag, {undefined, Unit}}];
 get_reading(Tag, Unit, unsigned, <<Value:8/unsigned>>, Coefficients) ->
     [{Tag, calc_reading(Unit, Value, Coefficients)}];
 get_reading(Tag, Unit, ones_complement, <<1:1, Raw:7>>, Coefficients) ->
