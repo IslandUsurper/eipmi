@@ -265,7 +265,7 @@
 -type lan_configurations() ::
     [
         {set, 0..15}
-        | {parameter, 0..19}
+        | {parameter, 0..20}
         | {set_in_progress, set_complete | set_in_progress | commit_write}
         | {auth_types, [eipmi_auth:type() | oem]}
         | {callback_level_auth_types, [eipmi_auth:type() | oem]}
@@ -296,6 +296,8 @@
         | {timeout, byte()}
         | {retries, 0..3}
         | {gateway, default | backup}
+        | {enable, boolean()}
+        | {vlan, 0..4095}
     ].
 
 -type picmg_properties() ::
